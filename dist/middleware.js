@@ -12,17 +12,16 @@ const userMiddleware = (req, res, next) => {
     if (decoded) {
         if (typeof decoded === "string") {
             res.status(403).json({
-                message: "you are not logged in"
+                message: "You are not logged in"
             });
             return;
         }
-        // @ts-ignore
         req.userId = decoded.id;
         next();
     }
     else {
         res.status(403).json({
-            message: "you are not logged in"
+            message: "You are not logged in"
         });
     }
 };

@@ -1,8 +1,18 @@
 import express, {Request, Response} from "express";
-import { UserModel } from "./db";
+import { UserModel, LinkModel, ContentModel } from "./db";
 import jwt from "jsonwebtoken";
 import { JWT_PASSWORD } from "./config";
 import { z } from "zod";
+import { userMiddleware } from "./middleware";
+
+declare global {
+    namespace Express {
+        interface Request {
+            userId?: string;
+        }
+    }
+}
+
 
 const app = express();
 app.use(express.json());
@@ -66,6 +76,66 @@ app.post("/api/v1/signin", async(req , res) => {
         })
     }
 })
+
+app.post("/api/v1/content", userMiddleware, async(req , res)=> {
+    const { link, type, tags } = req.body;
+    
+    await ContentModel.create({
+        link,
+        type,
+        title: req.body.title,
+        userId: req.userId,
+        tags: [tags]
+    })
+
+    res.json({
+        message: "Content added successfully"
+    })
+})
+
+app.get("/api/v1/content", userMiddleware, async(req , res)=>{
+    try{
+    const userId = req.userId;
+    const content = await ContentModel.find({
+        userId: userId
+    }).populate("userId", "username")
+    res.json({
+        content
+    })
+    }
+    catch(e) {
+        res.status(404).json({
+            message: "Content not found"
+        })
+    }
+})
+
+
+app.delete("/api/v1/content", userMiddleware, async (req , res)=> {
+    const contentId = req.body.contentId;
+    try{
+    await ContentModel.deleteMany({
+        contentId,
+        userId: req.userId
+    })
+    }
+    catch(e) {
+        res.status(404).json({
+            message: "Content not found"
+        })
+    }
+
+    res.json({
+        message: "Content deleted successfully"
+    })
+})
+
+
+
+
+
+
+
 
 
 app.listen(5002, () => {

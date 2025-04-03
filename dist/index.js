@@ -17,6 +17,7 @@ const db_1 = require("./db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("./config");
 const zod_1 = require("zod");
+const middleware_1 = require("./middleware");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 //defining zod schema
@@ -69,6 +70,52 @@ app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
             message: "Incorrect credentials"
         });
     }
+}));
+app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { link, type, tags } = req.body;
+    yield db_1.ContentModel.create({
+        link,
+        type,
+        title: req.body.title,
+        userId: req.userId,
+        tags: [tags]
+    });
+    res.json({
+        message: "Content added successfully"
+    });
+}));
+app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.userId;
+        const content = yield db_1.ContentModel.find({
+            userId: userId
+        }).populate("userId", "username");
+        res.json({
+            content
+        });
+    }
+    catch (e) {
+        res.status(404).json({
+            message: "Content not found"
+        });
+    }
+}));
+app.delete("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const contentId = req.body.contentId;
+    try {
+        yield db_1.ContentModel.deleteMany({
+            contentId,
+            userId: req.userId
+        });
+    }
+    catch (e) {
+        res.status(404).json({
+            message: "Content not found"
+        });
+    }
+    res.json({
+        message: "Content deleted successfully"
+    });
 }));
 app.listen(5002, () => {
     console.log("Server is running on port 5000");
