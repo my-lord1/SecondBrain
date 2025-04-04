@@ -79,12 +79,13 @@ app.post("/api/v1/signin", async(req , res) => {
 })
 
 app.post("/api/v1/content", userMiddleware, async(req , res)=> {
-    const { link, type, tags } = req.body;
+    const { link, type, tags, title } = req.body;
     
+
     await ContentModel.create({
         link,
         type,
-        title: req.body.title,
+        title,
         userId: req.userId,
         tags: [tags]
     })
@@ -138,6 +139,8 @@ app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
                 userId: req.userId
             });
 
+            console.log("existing Link", existingLink);
+
             if (existingLink) {
                 res.json({
                     hash: existingLink.hash
@@ -145,6 +148,7 @@ app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
                 return;
             }
             const hash = random(10);
+            console.log("hash value", hash);
             await LinkModel.create({
                 userId: req.userId,
                 hash: hash
